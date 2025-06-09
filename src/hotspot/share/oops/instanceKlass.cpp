@@ -915,6 +915,7 @@ void InstanceKlass::initialize_super_interfaces(TRAPS) {
   }
 }
 
+// 类的初始化对应的方法
 void InstanceKlass::initialize_impl(TRAPS) {
   HandleMark hm(THREAD);
 
@@ -1025,6 +1026,7 @@ void InstanceKlass::initialize_impl(TRAPS) {
                              jt->get_thread_stat()->perf_recursion_counts_addr(),
                              jt->get_thread_stat()->perf_timers_addr(),
                              PerfClassTraceTime::CLASS_CLINIT);
+    // 对应虚拟机文档第9步，因为省略了第8步
     call_class_initializer(THREAD);
   }
 
@@ -1335,6 +1337,7 @@ Method* InstanceKlass::class_initializer() const {
 }
 
 void InstanceKlass::call_class_initializer(TRAPS) {
+  // 如果启用了编译重放功能，则跳过初始化
   if (ReplayCompiles &&
       (ReplaySuppressInitializers == 1 ||
        (ReplaySuppressInitializers >= 2 && class_loader() != NULL))) {
@@ -1342,6 +1345,7 @@ void InstanceKlass::call_class_initializer(TRAPS) {
     return;
   }
 
+  // 获取初始化方法(静态代码块)，包装成methodHandle
   methodHandle h_method(THREAD, class_initializer());
   assert(!is_initialized(), "we cannot initialize twice");
   LogTarget(Info, class, init) lt;
@@ -1352,6 +1356,7 @@ void InstanceKlass::call_class_initializer(TRAPS) {
     name()->print_value_on(&ls);
     ls.print_cr("%s (" INTPTR_FORMAT ")", h_method() == NULL ? "(no method)" : "", p2i(this));
   }
+  // 调用初始方法(clinit，就是静态代码块，即使没有显式静态代码块，静态变量的直接赋值也会被放入静态代码块)
   if (h_method() != NULL) {
     JavaCallArguments args; // No arguments
     JavaValue result(T_VOID);
