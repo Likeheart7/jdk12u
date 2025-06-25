@@ -3371,6 +3371,7 @@ JVM_END
 
 // String support ///////////////////////////////////////////////////////////////////////////
 
+// java.lang.String.intern()的实现
 JVM_ENTRY(jstring, JVM_InternString(JNIEnv *env, jstring str))
   JVMWrapper("JVM_InternString");
   JvmtiVMObjectAllocEventCollector oam;

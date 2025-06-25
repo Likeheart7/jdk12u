@@ -19,8 +19,17 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
+ * 
  */
+//表示Java层面的类，可以据此为蓝图生成Java生成的对象(instanceOop)
+//  有一些有特殊语义的类；
+//  1. java.lang.Class的对象在垃圾回收时，需要遍历实例字段和静态字段
+//  2. java.lang.ref.*需要处理被引用对象
+//  3. java.lang.ClassLoader需要处理类加载数据
+//  上述类不能用instanceKlass统一表示需要通过派生出的
+// instanceMirrorKlass描述java.lang.Class
+// instanceRefKlass描述java.lang.ref.*
+// instanceClassLoader描述java.lang.ClassLoader
 
 #include "precompiled.hpp"
 #include "jvm.h"
@@ -1264,17 +1273,24 @@ instanceOop InstanceKlass::register_finalizer(instanceOop i, TRAPS) {
   return h_i();
 }
 
+// 根据instanceKlass创建instanceOop，对应根据Java类创建Java对象
 instanceOop InstanceKlass::allocate_instance(TRAPS) {
+  // 是否重写了finalize方法，重写了需要特殊处理
   bool has_finalizer_flag = has_finalizer(); // Query before possible GC
+  // 查询对象大小
   int size = size_helper();  // Query before forming handle.
 
   instanceOop i;
 
+  // 在堆上分配对象，内部调用objAllocateor创建，返回类型是一个oop，强转成instanceOop
+  // 本质上oop是指向一片内存的指针，只是通过强制类型转换将这片内存视作Java对象/数组
+  // 对象的本质就是用对象头+字段数据填充这块内存
   i = (instanceOop)Universe::heap()->obj_allocate(this, size, CHECK_NULL);
+  // 如果重写了finalize方法，需要注册到
   if (has_finalizer_flag && !RegisterFinalizersAtInit) {
     i = register_finalizer(i, CHECK_NULL);
   }
-  return i;
+  return i; // 返回对象
 }
 
 instanceHandle InstanceKlass::allocate_instance_handle(TRAPS) {

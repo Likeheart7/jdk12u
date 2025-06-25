@@ -126,14 +126,15 @@ void G1FullGCMarker::follow_array_chunk(objArrayOop array, int index) {
     }
   }
 }
-
+// G1的可达性分析
 inline void G1FullGCMarker::follow_object(oop obj) {
   assert(_bitmap->is_marked(obj), "should be marked");
+  // 如果对象是数组，标记每一个数组成员
   if (obj->is_objArray()) {
     // Handle object arrays explicitly to allow them to
     // be split into chunks if needed.
     follow_array((objArrayOop)obj);
-  } else {
+  } else { // 不是数组的，标记每一个非静态数据成员
     obj->oop_iterate(mark_closure());
     if (VerifyDuringGC) {
       if (obj->is_instance() && InstanceKlass::cast(obj->klass())->is_reference_instance_klass()) {

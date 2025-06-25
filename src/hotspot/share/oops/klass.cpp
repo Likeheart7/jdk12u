@@ -21,7 +21,8 @@
  * questions.
  *
  */
-
+// 一个抽象基类，定义了一些纯虚函数(可以认为接口)，由InstanceKalss继承并实现这些接口
+// 可以描述一个Java类的方法、字段有哪些，父类是否存在
 #include "precompiled.hpp"
 #include "classfile/classLoaderData.inline.hpp"
 #include "classfile/classLoaderDataGraph.inline.hpp"

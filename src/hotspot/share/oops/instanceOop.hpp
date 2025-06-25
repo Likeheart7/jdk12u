@@ -19,7 +19,7 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
+ * 表示Java层面的一个对象，由instanceKlass类作为蓝图生成，instanceKlass表示Java层面的一个类
  */
 
 #ifndef SHARE_VM_OOPS_INSTANCEOOP_HPP

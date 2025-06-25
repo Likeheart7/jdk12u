@@ -781,6 +781,7 @@ static void create_default_methods( InstanceKlass* klass,
 // klass default_methods list or, only to handle exception cases, we create an
 // overpass method that throws an exception and add it to the klass methods list.
 // The JVM does not create bridges nor handle generic signatures here.
+// 生成默认方法
 void DefaultMethods::generate_default_methods(
     InstanceKlass* klass, const GrowableArray<Method*>* mirandas, TRAPS) {
   assert(klass != NULL, "invariant");

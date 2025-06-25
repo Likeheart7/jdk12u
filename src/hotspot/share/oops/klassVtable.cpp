@@ -19,7 +19,7 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
+ * 虚表相关
  */
 
 #include "precompiled.hpp"
@@ -165,6 +165,7 @@ int klassVtable::initialize_from_super(Klass* super) {
 
 //
 // Revised lookup semantics   introduced 1.3 (Kestrel beta)
+// 虚表的初始化，可能在解析阶段，也可能懒初始化
 void klassVtable::initialize_vtable(bool checkconstraints, TRAPS) {
 
   // Note:  Arrays can have intermediate array supers.  Use java_super to skip them.
@@ -203,14 +204,17 @@ void klassVtable::initialize_vtable(bool checkconstraints, TRAPS) {
 
     // Check each of this class's methods against super;
     // if override, replace in copy of super vtable, otherwise append to end
+    // 检测当前类的所有方法
     for (int i = 0; i < len; i++) {
       // update_inherited_vtable can stop for gc - ensure using handles
       HandleMark hm(THREAD);
       assert(methods->at(i)->is_method(), "must be a Method*");
       methodHandle mh(THREAD, methods->at(i));
 
+      // 该方法是不是虚方法
       bool needs_new_entry = update_inherited_vtable(ik(), mh, super_vtable_len, -1, checkconstraints, CHECK);
 
+      // 如果是虚方法，需要更新当前类的虚表引用
       if (needs_new_entry) {
         put_method_at(mh(), initialized);
         mh()->set_vtable_index(initialized); // set primary vtable index
@@ -218,6 +222,7 @@ void klassVtable::initialize_vtable(bool checkconstraints, TRAPS) {
       }
     }
 
+    // 处理默认方法
     // update vtable with default_methods
     Array<Method*>* default_methods = ik()->default_methods();
     if (default_methods != NULL) {

@@ -655,29 +655,40 @@ static markOop ReadStableMark(oop obj) {
 //   There are simple ways to "diffuse" the middle address bits over the
 //   generated hashCode values:
 
+// Java层面调用Object.hashCode()或者System.identityHashCode()最终会调用虚拟机层的该方法
+// 可以使用命令行-XX:hashCode=<val>指定生成策略
+// OpenJdk12默认的策略是Marsaglia's xor-shift算法
+// 通过重复异或和位移自身值，可以得到很长的随机数序列周期，生成的随机数序列通过了所有随机性测试
+// 并且速度非常快，能达到每秒两亿次
 static inline intptr_t get_next_hash(Thread * Self, oop obj) {
   intptr_t value = 0;
   if (hashCode == 0) {
     // This form uses global Park-Miller RNG.
     // On MP system we'll have lots of RW access to a global, so the
     // mechanism induces lots of coherency traffic.
+    // 使用Park-Miller算法生成hash值
     value = os::random();
   } else if (hashCode == 1) {
     // This variation has the property of being stable (idempotent)
     // between STW operations.  This can be useful in some of the 1-0
     // synchronization schemes.
+    // 在STW时生成stwRandom做随机
     intptr_t addrBits = cast_from_oop<intptr_t>(obj) >> 3;
     value = addrBits ^ (addrBits >> 5) ^ GVars.stwRandom;
-  } else if (hashCode == 2) {
+  } else if (hashCode == 2) { // 所有对象得hash值都为1，测试用
     value = 1;            // for sensitivity testing
-  } else if (hashCode == 3) {
+  } else if (hashCode == 3) { // 每创建一个对象，hash值+1
     value = ++GVars.hcSequence;
-  } else if (hashCode == 4) {
+  } else if (hashCode == 4) { // 将对象内存地址当作hash值
     value = cast_from_oop<intptr_t>(obj);
   } else {
     // Marsaglia's xor-shift scheme with thread-specific state
     // This is probably the best overall implementation -- we'll
     // likely make this the default in future releases.
+    // Marsaglia's xor-shift随机数算法，生成hashcode
+    // OpenJdk12默认的策略是Marsaglia's xor-shift算法
+    // 通过重复异或和位移自身值，可以得到很长的随机数序列周期，生成的随机数序列通过了所有随机性测试
+    // 并且速度非常快，能达到每秒两亿次
     unsigned t = Self->_hashStateX;
     t ^= (t << 11);
     Self->_hashStateX = Self->_hashStateY;

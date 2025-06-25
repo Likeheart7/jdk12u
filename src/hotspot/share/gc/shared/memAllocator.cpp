@@ -354,12 +354,15 @@ HeapWord* MemAllocator::mem_allocate(Allocation& allocation) const {
   return allocate_outside_tlab(allocation);
 }
 
+// objAllocator继承自MemAllocator
 oop MemAllocator::allocate() const {
   oop obj = NULL;
   {
     Allocation allocation(*this, &obj);
+    // 根据size分配出一块内存
     HeapWord* mem = mem_allocate(allocation);
     if (mem != NULL) {
+      // 初始化对象头，其实就是这块内存最前面的一个字initialize会返回oop(mem)
       obj = initialize(mem);
     }
   }
